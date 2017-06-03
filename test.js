@@ -15,8 +15,8 @@ var appId = 'RecognitionTestApp';
 // Password should be sent to your e-mail after application was created
 var password = 'bXU8W/3G0eyivuLfxAuq0aLb';
 
-var imagePath = 'C:\\Users\\DRSPEED-PC\\Pictures\\2017-05-09\\IMG_0502.JPG';
-var outputPath = 'C:\\Users\\DRSPEED-PC\\Documents\\TEST_ABBYY\\result_js.xml';
+var imagePath = 'C:\\Users\\2017-05-09\\IMG_0502.JPG';
+var outputPath = 'C:\\Users\\TEST_ABBYY\\result_js.xml';
 
 try {
 	console.log("ABBYY Cloud OCR SDK Sample for Node.js");
