@@ -11,21 +11,23 @@ if (((typeof process) == 'undefined') || ((typeof window) != 'undefined')) {
 // http://ocrsdk.com/documentation/faq/#faq3
 
 // Name of application you created
-var appId = 'RecognitionTestApp';
+const appId = 'RecognitionTestApp';
 // Password should be sent to your e-mail after application was created
-var password = 'bXU8W/3G0eyivuLfxAuq0aLb';
+const password = 'bXU8W/3G0eyivuLfxAuq0aLb';
 
-var imagePath = 'C:\\Users\\2017-05-09\\IMG_0502.JPG';
-var outputPath = 'C:\\Users\\TEST_ABBYY\\result_js.xml';
+const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\IMG_20170604_150715631.jpg';
+const outputPath = 'C:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\result_js.json';
 
 try {
 	console.log("ABBYY Cloud OCR SDK Sample for Node.js");
 
-	var ocrsdkModule = require('./ocrsdk.js');
-	var ocrsdk = ocrsdkModule.create(appId, password);
+	var Promise = require('es6-promise').Promise;
+
+	const ocrsdkModule = require('./ocrsdk.js');
+	const ocrsdk = ocrsdkModule.create(appId, password);
 	ocrsdk.serverUrl = "https://cloud.ocrsdk.com"; // change to https for secure connection
 
-	if (appId.length == 0 || password.length == 0) {
+	if (appId.length === 0 || password.length === 0) {
 		throw new Error("Please provide your application id and password!");
 	}
 	
@@ -79,11 +81,14 @@ try {
 		ocrsdk.waitForCompletion(taskData.id, processingCompleted);
 	}
 
-	var settings = new ocrsdkModule.ProcessingSettings();
+	const settings = new ocrsdkModule.ProcessingSettings();
 	// Set your own recognition language and output format here
-	settings.language = "Russian,English"; // Can be comma-separated list, e.g. "German,French".
-	settings.exportFormat = "xml"; // All possible values are listed in 'exportFormat' parameter description 
+	settings.language = "Russian"; // Can be comma-separated list, e.g. "German,French".
+	settings.exportFormat = "xml"; // All possible values are listed in 'exportFormat' parameter description
                                    // at http://ocrsdk.com/documentation/apireference/processImage/
+	settings.profile = 'textExtraction';
+	settings.imageSource = 'scanner';
+	settings.textType = 'normal,ocrB';
 
 	console.log("Uploading image..");
 	ocrsdk.processImage(imagePath, settings, uploadCompleted);

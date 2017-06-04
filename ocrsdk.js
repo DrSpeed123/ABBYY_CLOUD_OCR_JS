@@ -60,8 +60,6 @@ function ProcessingSettings() {
 								// of languages.
 	this.exportFormat = "xml"; // Output format. One of: txt, rtf, docx, xlsx,
 								// pptx, pdfSearchable, pdfTextAndImages, xml.
-	this.customOptions = ''; // Other custom options passed to RESTful call,
-								// like 'profile=documentArchiving'
 }
 
 /**
@@ -171,16 +169,33 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 
 	var parsed = url.parse(resultUrl);
 
-	var req = https.request(parsed, function(response) {
-		response.on('data', function(data) {
-			file.write(data);
+	function getServerResponse(res) {
+		var allData = '';
+		res.setEncoding('utf8');
+		res.on('data', function(data) {
+			allData += data;
 		});
-
-		response.on('end', function() {
+		res.on('end', function() {
+			var qwe = xml2json(allData);
+			console.log(qwe.document.page);
+			file.write(JSON.stringify(qwe));
 			file.end();
 			userCallback(null);
-		});
-	});
+		})
+	}
+
+	var req = https.request(parsed, getServerResponse);
+	// function(response) {
+
+		// response.on('data', function(data) {
+		// 	file.write(data);
+		// });
+        //
+		// response.on('end', function() {
+		// 	file.end();
+		// 	userCallback(null);
+		// });
+	// });
 
 	req.on('error', function(error) {
 		userCallback(error);
@@ -188,6 +203,29 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 
 	req.end();
 
+}
+
+function xml2json(data) {
+	var response = null;
+
+	var parser = new xml2js.Parser({
+		explicitCharKey : false,
+		trim : true,
+		explicitRoot : true,
+		mergeAttrs : true
+	});
+	parser.parseString(data, function(err, objResult) {
+		if (err) {
+			throw err;
+		}
+
+		response = objResult;
+	});
+
+	if (response == null) {
+		return;
+	}
+	return response;
 }
 
 /**
@@ -209,24 +247,10 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
 	 */
 	function parseXmlResponse(data) {
 		var response = null;
-
-		var parser = new xml2js.Parser({
-			explicitCharKey : false,
-			trim : true,
-			explicitRoot : true,
-			mergeAttrs : true
-		});
-		parser.parseString(data, function(err, objResult) {
-			if (err) {
-				taskDataCallback(err, null);
-				return;
-			}
-
-			response = objResult;
-		});
-
-		if (response == null) {
-			return;
+		try {
+			response = xml2json(data);
+		} catch (err) {
+			taskDataCallback(err, null);
 		}
 
 		if (response.response == null || response.response.task == null
@@ -276,21 +300,14 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
  */
 ProcessingSettings.prototype.asUrlParams = function() {
 	var result = '';
-
-	if (this.language.length != null) {
-		result = '?language=' + this.language;
-	} else {
-		result = '?language=English';
-	}
-
-	if (this.exportFormat.length != null) {
-		result += '&exportFormat=' + this.exportFormat;
-	} else {
-		result += "&exportFormat=txt"
-	}
-
-	if (this.customOptions.length != 0) {
-		result += '?' + this.customOptions;
+	console.log(this);
+	let i = 0;
+	for (let field in this) {
+		if (this.hasOwnProperty(field)) {
+			result += (i > 0) ? '&' : '?';
+			result += field + '=' + this[field];
+		}
+		i++;
 	}
 
 	return result;
