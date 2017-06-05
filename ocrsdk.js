@@ -8,6 +8,7 @@ var url = require("url");
 var sys = require("sys");
 var events = require("events");
 var fs = require('fs');
+var l_object = require('lodash/object');
 
 var xml2js = null;
 try {
@@ -177,9 +178,22 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 		});
 		res.on('end', function() {
 			var qwe = xml2json(allData);
-			console.log(qwe.document.page);
 			file.write(JSON.stringify(qwe));
 			file.end();
+			const lines = qwe.document.page[0].block;
+			lines.forEach(function (line) {
+				const wordArr = l_object.get(line, 'text.0.par.0.line.0.formatting.0.charParams', []);
+				const word = wordArr.reduce(function(res, cur) {
+					if (cur['_']) {
+						res += cur['_'];
+					}
+					return res;
+				}, '');
+				const suspicious = wordArr.some(function(el) {
+					return el.suspicious;
+				});
+				console.log(word, suspicious);
+			});
 			userCallback(null);
 		})
 	}
@@ -300,7 +314,6 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
  */
 ProcessingSettings.prototype.asUrlParams = function() {
 	var result = '';
-	console.log(this);
 	let i = 0;
 	for (let field in this) {
 		if (this.hasOwnProperty(field)) {
