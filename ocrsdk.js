@@ -67,23 +67,30 @@ function ProcessingSettings() {
  * Upload file to server and start processing.
  * 
  * @param {string} filePath 					Path to the file to be processed.
- * @param {ProcessingSettings} [settings] 		Image processing settings.
  * @param {function(error, taskData)} callback 	The callback function.
  */
-ocrsdk.prototype.processImage = function(filePath, settings, userCallback) {
+ocrsdk.prototype.submitImage = function(filePath, userCallback) {
 
 	if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
 		userCallback(new Error("file " + filePath + " doesn't exist"), null);
 		return;
 	}
 
-	if (settings == null) {
-		settings = new ProcessingSettings();
+	var req = this._createTaskRequest('POST', '/submitImage', userCallback);
+
+	var fileContents = fs.readFileSync(filePath);
+	req.write(fileContents);
+	req.end();
+}
+
+ocrsdk.prototype.processFields = function(filePath, taskId, userCallback) {
+
+	if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+		userCallback(new Error("file " + filePath + " doesn't exist"), null);
+		return;
 	}
 
-	var urlOptions = settings.asUrlParams();
-	var req = this._createTaskRequest('POST', '/processImage' + urlOptions,
-			userCallback);
+	var req = this._createTaskRequest('POST', '/processFields' + '?taskId=' + taskId, userCallback);
 
 	var fileContents = fs.readFileSync(filePath);
 	req.write(fileContents);
@@ -314,13 +321,13 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
  */
 ProcessingSettings.prototype.asUrlParams = function() {
 	var result = '';
-	let i = 0;
+	let isFirst = true;
 	for (let field in this) {
 		if (this.hasOwnProperty(field)) {
-			result += (i > 0) ? '&' : '?';
+			result += isFirst ? '?' : '&';
 			result += field + '=' + this[field];
 		}
-		i++;
+		isFirst = false;
 	}
 
 	return result;

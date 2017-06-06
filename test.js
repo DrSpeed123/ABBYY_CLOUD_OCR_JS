@@ -16,6 +16,7 @@ const appId = 'RecognitionTestApp';
 const password = 'bXU8W/3G0eyivuLfxAuq0aLb';
 
 const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\IMG_20170604_150708888.jpg';
+const xmlPath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\taskTemplate.xml';
 const outputPath = 'C:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\result_js.json';
 
 try {
@@ -65,13 +66,13 @@ try {
 						downloadCompleted);
 	}
 
-	function uploadCompleted(error, taskData) {
+	function processCompleted(error, taskData) {
 		if (error) {
 			console.log("Error: " + error.message);
 			return;
 		}
 
-		console.log("Upload completed.");
+		console.log("Upload xml completed.");
 		console.log("Task id = " + taskData.id + ", status is " + taskData.status);
 		if (!ocrsdk.isTaskActive(taskData)) {
 			console.log("Unexpected task status " + taskData.status);
@@ -81,17 +82,20 @@ try {
 		ocrsdk.waitForCompletion(taskData.id, processingCompleted);
 	}
 
-	const settings = new ocrsdkModule.ProcessingSettings();
-	// Set your own recognition language and output format here
-	settings.language = "Russian"; // Can be comma-separated list, e.g. "German,French".
-	settings.exportFormat = "xml"; // All possible values are listed in 'exportFormat' parameter description
-                                   // at http://ocrsdk.com/documentation/apireference/processImage/
-	settings.profile = 'textExtraction';
-	settings.imageSource = 'scanner';
-	settings.textType = 'normal,ocrB';
+	function submitCompleted(error, taskData) {
+		if (error) {
+			console.log("Error: " + error.message);
+			return;
+		}
+
+		console.log("Upload image completed.");
+		console.log("Task id = " + taskData.id + ", status is " + taskData.status);
+
+		ocrsdk.processFields(xmlPath, taskData.id, processCompleted);
+	}
 
 	console.log("Uploading image..");
-	ocrsdk.processImage(imagePath, settings, uploadCompleted);
+	ocrsdk.submitImage(imagePath, submitCompleted);
 
 } catch (err) {
 	console.log("Error: " + err.message);
