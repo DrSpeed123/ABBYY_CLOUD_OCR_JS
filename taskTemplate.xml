@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://ocrsdk.com/schema/taskDescription-1.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ocrsdk.com/schema/taskDescription-1.0.xsd">
+<fieldTemplates>
+        <text id="simpleTextField" bottom="0" left="0" right="0" top="0">
+             <language>Russian</language>
+			 <letterSet>АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя</letterSet>
+             <textType>normal</textType>
+			 <oneTextLine>true</oneTextLine>
+			 <rotation>noRotation</rotation>			 
+        </text>
+		        <text id="mixedTextField" bottom="0" left="0" right="0" top="0">
+             <language>Russian</language>
+			 <letterSet>АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя123456789</letterSet>
+             <textType>normal</textType>
+			 <oneTextLine>false</oneTextLine>
+			 <rotation>noRotation</rotation>			 
+        </text>
+        <text id="numberField" bottom="0" left="0" right="0" top="0">
+             <language>Russian</language>
+			 <letterSet>1234567890.</letterSet>
+			 <!--<regExp>([0-9][0-9])\s([0-9][0-9])\s([0-9][0-9][0-9][0-9][0-9][0-9])</regExp>	-->
+			 <oneTextLine>true</oneTextLine>
+			 <!--<rotation>counterclockwise</rotation>			 		 -->
+        </text> 		
+</fieldTemplates>
+<page applyTo="0">
+    <text template="simpleTextField" id="lastName" left="1100" top="262" right="1600" bottom="312">
+        <language>Russian</language>
+    </text>
+    <text template="simpleTextField" id="firstName" left="1100" top="513" right="1600" bottom="563">
+        <language>Russian</language>
+    </text>
+    <text template="simpleTextField" id="middleName" left="1000" top="630" right="1700" bottom="680">
+        <language>Russian</language>
+    </text>
+
+    <text template="simpleTextField" id="gender" left="800" top="770" right="1000" bottom="820">
+        <language>Russian</language>
+    </text>
+    <text template="numberField" id="birthDate" left="1390" top="770" right="1900" bottom="820">
+        <language>Russian</language>
+        <regExp>(((|0)[1-9])|([12][0-9])|(30)|(31))\.(((|0)[1-9])|(10)|(11)|(12))\.(([0-9][0-9][0-9][0-9])|([0-9][0-9]))</regExp>
+    </text>
+    <text template="simpleTextField" id="birthPlace" left="900" top="893" right="1700" bottom="943">
+        <language>Russian</language>
+    </text>
+    <text template="simpleTextField" id="birthPlace1" left="900" top="1019" right="1700" bottom="1069">
+        <language>Russian</language>
+    </text>
+    <!--<text template="numberField" id="seriesAndNumber" left="10" top="50" right="20" bottom="70">-->
+        <!--<language>Russian</language>-->
+    <!--</text>-->
+</page>
+<!--<page applyTo="1">-->
+        <!--<text template="mixedTextField" id="issuedBy" left="10" top="10" right="20" bottom="30">-->
+                <!--<language>Russian</language>-->
+        <!--</text>-->
+        <!--<text template="numberField" id="issueDate" left="10" top="50" right="20" bottom="70">-->
+                <!--<language>Russian</language>-->
+				<!--<regExp>(((|0)[1-9])|([12][0-9])|(30)|(31))\.(((|0)[1-9])|(10)|(11)|(12))\.(([0-9][0-9][0-9][0-9])|([0-9][0-9]))</regExp>-->
+        <!--</text>               -->
+<!--</page>-->
+</document>

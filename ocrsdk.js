@@ -187,20 +187,19 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 			var qwe = xml2json(allData);
 			file.write(JSON.stringify(qwe));
 			file.end();
-			const lines = qwe.document.page[0].block;
-			lines.forEach(function (line) {
-				const wordArr = l_object.get(line, 'text.0.par.0.line.0.formatting.0.charParams', []);
-				const word = wordArr.reduce(function(res, cur) {
-					if (cur['_']) {
-						res += cur['_'];
-					}
-					return res;
-				}, '');
-				const suspicious = wordArr.some(function(el) {
-					return el.suspicious;
-				});
-				console.log(word, suspicious);
-			});
+			const fields = qwe.document.page[0].text;
+			const asd = fields.reduce(function(res, cur) {
+				const wordArr = l_object.get(cur, 'line[0].char', []);
+				const curObj = {
+					value: cur.value[0],
+					suspicious: wordArr.some(function(el) {
+						return el.suspicious;
+					})
+				};
+				res[cur.id] = curObj;
+				return res;
+			}, {});
+			console.log(JSON.stringify(asd));
 			userCallback(null);
 		})
 	}
