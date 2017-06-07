@@ -18,10 +18,8 @@
         <text id="numberField" bottom="0" left="0" right="0" top="0">
              <language>Russian</language>
 			 <letterSet>1234567890.</letterSet>
-			 <!--<regExp>([0-9][0-9])\s([0-9][0-9])\s([0-9][0-9][0-9][0-9][0-9][0-9])</regExp>	-->
 			 <oneTextLine>true</oneTextLine>
-			 <!--<rotation>counterclockwise</rotation>			 		 -->
-        </text> 		
+        </text>
 </fieldTemplates>
 <page applyTo="0">
     <text template="simpleTextField" id="lastName" left="1100" top="262" right="1600" bottom="312">
@@ -47,9 +45,11 @@
     <text template="simpleTextField" id="birthPlace1" left="900" top="1019" right="1700" bottom="1069">
         <language>Russian</language>
     </text>
-    <!--<text template="numberField" id="seriesAndNumber" left="10" top="50" right="20" bottom="70">-->
-        <!--<language>Russian</language>-->
-    <!--</text>-->
+    <text template="numberField" id="seriesAndNumber" left="2150" top="400" right="2270" bottom="1180">
+        <language>Russian</language>
+        <regExp>([0-9][0-9])\s([0-9][0-9])\s([0-9][0-9][0-9][0-9][0-9][0-9])</regExp>
+        <rotation>clockwise</rotation>
+    </text>
 </page>
 <!--<page applyTo="1">-->
         <!--<text template="mixedTextField" id="issuedBy" left="10" top="10" right="20" bottom="30">-->

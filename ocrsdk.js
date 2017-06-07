@@ -188,7 +188,7 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 			file.write(JSON.stringify(qwe));
 			file.end();
 			const fields = qwe.document.page[0].text;
-			const asd = fields.reduce(function(res, cur) {
+			const result = fields.reduce(function(res, cur) {
 				const wordArr = l_object.get(cur, 'line[0].char', []);
 				const curObj = {
 					value: cur.value[0],
@@ -199,8 +199,7 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 				res[cur.id] = curObj;
 				return res;
 			}, {});
-			console.log(JSON.stringify(asd));
-			userCallback(null);
+			userCallback(null, result);
 		})
 	}
 

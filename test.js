@@ -19,84 +19,97 @@ const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\IMG_20170604_150708888.j
 const xmlPath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\taskTemplate.xml';
 const outputPath = 'C:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\result_js.json';
 
-try {
-	console.log("ABBYY Cloud OCR SDK Sample for Node.js");
-
+function recognize(imagePath) {
 	var Promise = require('es6-promise').Promise;
 
-	const ocrsdkModule = require('./ocrsdk.js');
-	const ocrsdk = ocrsdkModule.create(appId, password);
-	ocrsdk.serverUrl = "https://cloud.ocrsdk.com"; // change to https for secure connection
+	return new Promise(function(resolve, reject) {
+		try {
+			console.log("ABBYY Cloud OCR SDK Sample for Node.js");
 
-	if (appId.length === 0 || password.length === 0) {
-		throw new Error("Please provide your application id and password!");
-	}
-	
-	if( imagePath == 'myFile.jpg') {
-		throw new Error( "Please provide path to your image!")
-	}
+			const ocrsdkModule = require('./ocrsdk.js');
+			const ocrsdk = ocrsdkModule.create(appId, password);
+			ocrsdk.serverUrl = "https://cloud.ocrsdk.com"; // change to https for secure connection
 
-	function downloadCompleted(error) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
-		}
-		console.log("Done.");
-	}
-
-	function processingCompleted(error, taskData) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
-		}
-
-		if (taskData.status != 'Completed') {
-			console.log("Error processing the task.");
-			if (taskData.error) {
-				console.log("Message: " + taskData.error);
+			if (appId.length === 0 || password.length === 0) {
+				reject(new Error("Please provide your application id and password!"));
 			}
-			return;
-		}
 
-		console.log("Processing completed.");
-		console.log("Downloading result to " + outputPath);
+			if( imagePath == 'myFile.jpg') {
+				reject(new Error( "Please provide path to your image!"));
+			}
 
-		ocrsdk
-				.downloadResult(taskData.resultUrl.toString(), outputPath,
+			function downloadCompleted(error, data) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(data);
+				}
+				console.log("Done.");
+				resolve(data);
+			}
+
+			function processingCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				if (taskData.status != 'Completed') {
+					console.log("Error processing the task.");
+					if (taskData.error) {
+						console.log("Message: " + taskData.error);
+					}
+					reject(taskData.error);
+				}
+
+				console.log("Processing completed.");
+				console.log("Downloading result to " + outputPath);
+
+				ocrsdk.downloadResult(taskData.resultUrl.toString(), outputPath,
 						downloadCompleted);
-	}
+			}
 
-	function processCompleted(error, taskData) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
+			function processCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				console.log("Upload xml completed.");
+				console.log("Task id = " + taskData.id + ", status is " + taskData.status);
+				if (!ocrsdk.isTaskActive(taskData)) {
+					console.log("Unexpected task status " + taskData.status);
+					reject(taskData.status);
+				}
+
+				ocrsdk.waitForCompletion(taskData.id, processingCompleted);
+			}
+
+			function submitCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				console.log("Upload image completed.");
+				console.log("Task id = " + taskData.id + ", status is " + taskData.status);
+
+				ocrsdk.processFields(xmlPath, taskData.id, processCompleted);
+			}
+
+			console.log("Uploading image..");
+			ocrsdk.submitImage(imagePath, submitCompleted);
+
+		} catch (err) {
+			console.log("Error: " + err.message);
+			reject(err);
 		}
-
-		console.log("Upload xml completed.");
-		console.log("Task id = " + taskData.id + ", status is " + taskData.status);
-		if (!ocrsdk.isTaskActive(taskData)) {
-			console.log("Unexpected task status " + taskData.status);
-			return;
-		}
-
-		ocrsdk.waitForCompletion(taskData.id, processingCompleted);
-	}
-
-	function submitCompleted(error, taskData) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
-		}
-
-		console.log("Upload image completed.");
-		console.log("Task id = " + taskData.id + ", status is " + taskData.status);
-
-		ocrsdk.processFields(xmlPath, taskData.id, processCompleted);
-	}
-
-	console.log("Uploading image..");
-	ocrsdk.submitImage(imagePath, submitCompleted);
-
-} catch (err) {
-	console.log("Error: " + err.message);
+	});
 }
+
+recognize(imagePath)
+	.then(function(data) {
+		console.log(data);
+	})
+	.catch(function(err) {
+		console.log(err)
+	});
