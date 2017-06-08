@@ -11,83 +11,105 @@ if (((typeof process) == 'undefined') || ((typeof window) != 'undefined')) {
 // http://ocrsdk.com/documentation/faq/#faq3
 
 // Name of application you created
-var appId = 'RecognitionTestApp';
+const appId = 'RecognitionTestApp';
 // Password should be sent to your e-mail after application was created
-var password = 'bXU8W/3G0eyivuLfxAuq0aLb';
+const password = 'bXU8W/3G0eyivuLfxAuq0aLb';
 
-var imagePath = 'C:\\Users\\2017-05-09\\IMG_0502.JPG';
-var outputPath = 'C:\\Users\\TEST_ABBYY\\result_js.xml';
+const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\IMG_20170604_150708888.jpg';
+const xmlPath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\taskTemplate.xml';
+const outputPath = 'C:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\result_js.json';
 
-try {
-	console.log("ABBYY Cloud OCR SDK Sample for Node.js");
+function recognize(imagePath) {
+	var Promise = require('es6-promise').Promise;
 
-	var ocrsdkModule = require('./ocrsdk.js');
-	var ocrsdk = ocrsdkModule.create(appId, password);
-	ocrsdk.serverUrl = "https://cloud.ocrsdk.com"; // change to https for secure connection
+	return new Promise(function(resolve, reject) {
+		try {
+			console.log("ABBYY Cloud OCR SDK Sample for Node.js");
 
-	if (appId.length == 0 || password.length == 0) {
-		throw new Error("Please provide your application id and password!");
-	}
-	
-	if( imagePath == 'myFile.jpg') {
-		throw new Error( "Please provide path to your image!")
-	}
+			const ocrsdkModule = require('./ocrsdk.js');
+			const ocrsdk = ocrsdkModule.create(appId, password);
+			ocrsdk.serverUrl = "https://cloud.ocrsdk.com"; // change to https for secure connection
 
-	function downloadCompleted(error) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
-		}
-		console.log("Done.");
-	}
-
-	function processingCompleted(error, taskData) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
-		}
-
-		if (taskData.status != 'Completed') {
-			console.log("Error processing the task.");
-			if (taskData.error) {
-				console.log("Message: " + taskData.error);
+			if (appId.length === 0 || password.length === 0) {
+				reject(new Error("Please provide your application id and password!"));
 			}
-			return;
-		}
 
-		console.log("Processing completed.");
-		console.log("Downloading result to " + outputPath);
+			if( imagePath == 'myFile.jpg') {
+				reject(new Error( "Please provide path to your image!"));
+			}
 
-		ocrsdk
-				.downloadResult(taskData.resultUrl.toString(), outputPath,
+			function downloadCompleted(error, data) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(data);
+				}
+				console.log("Done.");
+				resolve(data);
+			}
+
+			function processingCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				if (taskData.status != 'Completed') {
+					console.log("Error processing the task.");
+					if (taskData.error) {
+						console.log("Message: " + taskData.error);
+					}
+					reject(taskData.error);
+				}
+
+				console.log("Processing completed.");
+				console.log("Downloading result to " + outputPath);
+
+				ocrsdk.downloadResult(taskData.resultUrl.toString(), outputPath,
 						downloadCompleted);
-	}
+			}
 
-	function uploadCompleted(error, taskData) {
-		if (error) {
-			console.log("Error: " + error.message);
-			return;
+			function processCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				console.log("Upload xml completed.");
+				console.log("Task id = " + taskData.id + ", status is " + taskData.status);
+				if (!ocrsdk.isTaskActive(taskData)) {
+					console.log("Unexpected task status " + taskData.status);
+					reject(taskData.status);
+				}
+
+				ocrsdk.waitForCompletion(taskData.id, processingCompleted);
+			}
+
+			function submitCompleted(error, taskData) {
+				if (error) {
+					console.log("Error: " + error.message);
+					reject(error);
+				}
+
+				console.log("Upload image completed.");
+				console.log("Task id = " + taskData.id + ", status is " + taskData.status);
+
+				ocrsdk.processFields(xmlPath, taskData.id, processCompleted);
+			}
+
+			console.log("Uploading image..");
+			ocrsdk.submitImage(imagePath, submitCompleted);
+
+		} catch (err) {
+			console.log("Error: " + err.message);
+			reject(err);
 		}
-
-		console.log("Upload completed.");
-		console.log("Task id = " + taskData.id + ", status is " + taskData.status);
-		if (!ocrsdk.isTaskActive(taskData)) {
-			console.log("Unexpected task status " + taskData.status);
-			return;
-		}
-
-		ocrsdk.waitForCompletion(taskData.id, processingCompleted);
-	}
-
-	var settings = new ocrsdkModule.ProcessingSettings();
-	// Set your own recognition language and output format here
-	settings.language = "Russian,English"; // Can be comma-separated list, e.g. "German,French".
-	settings.exportFormat = "xml"; // All possible values are listed in 'exportFormat' parameter description 
-                                   // at http://ocrsdk.com/documentation/apireference/processImage/
-
-	console.log("Uploading image..");
-	ocrsdk.processImage(imagePath, settings, uploadCompleted);
-
-} catch (err) {
-	console.log("Error: " + err.message);
+	});
 }
+
+recognize(imagePath)
+	.then(function(data) {
+		console.log(data);
+	})
+	.catch(function(err) {
+		console.log(err)
+	});

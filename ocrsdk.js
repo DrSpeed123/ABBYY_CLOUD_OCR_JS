@@ -8,6 +8,7 @@ var url = require("url");
 var sys = require("sys");
 var events = require("events");
 var fs = require('fs');
+var l_object = require('lodash/object');
 
 var xml2js = null;
 try {
@@ -60,31 +61,36 @@ function ProcessingSettings() {
 								// of languages.
 	this.exportFormat = "xml"; // Output format. One of: txt, rtf, docx, xlsx,
 								// pptx, pdfSearchable, pdfTextAndImages, xml.
-	this.customOptions = ''; // Other custom options passed to RESTful call,
-								// like 'profile=documentArchiving'
 }
 
 /**
  * Upload file to server and start processing.
  * 
  * @param {string} filePath 					Path to the file to be processed.
- * @param {ProcessingSettings} [settings] 		Image processing settings.
  * @param {function(error, taskData)} callback 	The callback function.
  */
-ocrsdk.prototype.processImage = function(filePath, settings, userCallback) {
+ocrsdk.prototype.submitImage = function(filePath, userCallback) {
 
 	if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
 		userCallback(new Error("file " + filePath + " doesn't exist"), null);
 		return;
 	}
 
-	if (settings == null) {
-		settings = new ProcessingSettings();
+	var req = this._createTaskRequest('POST', '/submitImage', userCallback);
+
+	var fileContents = fs.readFileSync(filePath);
+	req.write(fileContents);
+	req.end();
+}
+
+ocrsdk.prototype.processFields = function(filePath, taskId, userCallback) {
+
+	if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+		userCallback(new Error("file " + filePath + " doesn't exist"), null);
+		return;
 	}
 
-	var urlOptions = settings.asUrlParams();
-	var req = this._createTaskRequest('POST', '/processImage' + urlOptions,
-			userCallback);
+	var req = this._createTaskRequest('POST', '/processFields' + '?taskId=' + taskId, userCallback);
 
 	var fileContents = fs.readFileSync(filePath);
 	req.write(fileContents);
@@ -171,16 +177,44 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 
 	var parsed = url.parse(resultUrl);
 
-	var req = https.request(parsed, function(response) {
-		response.on('data', function(data) {
-			file.write(data);
+	function getServerResponse(res) {
+		var allData = '';
+		res.setEncoding('utf8');
+		res.on('data', function(data) {
+			allData += data;
 		});
-
-		response.on('end', function() {
+		res.on('end', function() {
+			var qwe = xml2json(allData);
+			file.write(JSON.stringify(qwe));
 			file.end();
-			userCallback(null);
-		});
-	});
+			const fields = qwe.document.page[0].text;
+			const result = fields.reduce(function(res, cur) {
+				const wordArr = l_object.get(cur, 'line[0].char', []);
+				const curObj = {
+					value: cur.value[0],
+					suspicious: wordArr.some(function(el) {
+						return el.suspicious;
+					})
+				};
+				res[cur.id] = curObj;
+				return res;
+			}, {});
+			userCallback(null, result);
+		})
+	}
+
+	var req = https.request(parsed, getServerResponse);
+	// function(response) {
+
+		// response.on('data', function(data) {
+		// 	file.write(data);
+		// });
+        //
+		// response.on('end', function() {
+		// 	file.end();
+		// 	userCallback(null);
+		// });
+	// });
 
 	req.on('error', function(error) {
 		userCallback(error);
@@ -188,6 +222,29 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 
 	req.end();
 
+}
+
+function xml2json(data) {
+	var response = null;
+
+	var parser = new xml2js.Parser({
+		explicitCharKey : false,
+		trim : true,
+		explicitRoot : true,
+		mergeAttrs : true
+	});
+	parser.parseString(data, function(err, objResult) {
+		if (err) {
+			throw err;
+		}
+
+		response = objResult;
+	});
+
+	if (response == null) {
+		return;
+	}
+	return response;
 }
 
 /**
@@ -209,24 +266,10 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
 	 */
 	function parseXmlResponse(data) {
 		var response = null;
-
-		var parser = new xml2js.Parser({
-			explicitCharKey : false,
-			trim : true,
-			explicitRoot : true,
-			mergeAttrs : true
-		});
-		parser.parseString(data, function(err, objResult) {
-			if (err) {
-				taskDataCallback(err, null);
-				return;
-			}
-
-			response = objResult;
-		});
-
-		if (response == null) {
-			return;
+		try {
+			response = xml2json(data);
+		} catch (err) {
+			taskDataCallback(err, null);
 		}
 
 		if (response.response == null || response.response.task == null
@@ -276,21 +319,13 @@ ocrsdk.prototype._createTaskRequest = function(method, urlPath,
  */
 ProcessingSettings.prototype.asUrlParams = function() {
 	var result = '';
-
-	if (this.language.length != null) {
-		result = '?language=' + this.language;
-	} else {
-		result = '?language=English';
-	}
-
-	if (this.exportFormat.length != null) {
-		result += '&exportFormat=' + this.exportFormat;
-	} else {
-		result += "&exportFormat=txt"
-	}
-
-	if (this.customOptions.length != 0) {
-		result += '?' + this.customOptions;
+	let isFirst = true;
+	for (let field in this) {
+		if (this.hasOwnProperty(field)) {
+			result += isFirst ? '?' : '&';
+			result += field + '=' + this[field];
+		}
+		isFirst = false;
 	}
 
 	return result;
