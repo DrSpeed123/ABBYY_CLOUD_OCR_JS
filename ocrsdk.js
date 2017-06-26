@@ -188,16 +188,62 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 			file.write(JSON.stringify(qwe));
 			file.end();
 			const fields = qwe.document.page[0].text;
-			const result = fields.reduce(function(res, cur) {
+			const resultUnhandled = fields.reduce(function(res, cur) {
 				const wordArr = l_object.get(cur, 'line[0].char', []);
-				const curObj = {
-					value: cur.value[0],
-					suspicious: wordArr.some(function(el) {
-						return el.suspicious;
-					})
-				};
+				const curObj = wordArr.reduce(function(allObj, el) {
+					if (el._ && el._ === "^") {
+						return allObj;
+					}
+					const left = el.left[0] - (el.left[0] % 5);
+					const top = el.top[0] - (el.top[0]) % 5;
+					allObj[left + '_' + top] = {
+						value: el._ || '',
+						weight: el.suspicious ? 1 : 2
+					};
+					return allObj;
+				}, {});
 				res[cur.id] = curObj;
 				return res;
+			}, {});
+			const resultProcessed = Object.keys(resultUnhandled).reduce(function(res, key){
+				const curKey = key.substr(0, key.length - 1);
+				if (!res[curKey]) {
+					res[curKey] = {}
+				}
+				Object.keys(resultUnhandled[key]).forEach(function(leftTop) {
+					if (!res[curKey][leftTop]) {
+						res[curKey][leftTop] = {
+							total: 0
+						}
+					}
+					const byChar = res[curKey][leftTop][resultUnhandled[key][leftTop].value] || 0;
+					res[curKey][leftTop][resultUnhandled[key][leftTop].value] = byChar + resultUnhandled[key][leftTop].weight;
+					res[curKey][leftTop].total += resultUnhandled[key][leftTop].weight;
+				}, {});
+				return res;
+			}, {});
+			const result = Object.keys(resultProcessed).reduce(function(field, fieldName){
+				field[fieldName] = Object.keys(resultProcessed[fieldName]).reduce(function(resField, leftTop) {
+					let resVal = '', max = 0;
+					console.log(resultProcessed[fieldName][leftTop]);
+					Object.keys(resultProcessed[fieldName][leftTop]).forEach(function(curKey) {
+						if (curKey !== 'total' && resultProcessed[fieldName][leftTop][curKey] > max) {
+							max = resultProcessed[fieldName][leftTop][curKey];
+							resVal = curKey;
+						}
+					});
+					if (resultProcessed[fieldName][leftTop].total >= 3) {
+						resField.value += resVal;
+						if (resultProcessed[fieldName][leftTop].total < 5) {
+							resField.suspicious = true;
+						}
+					}
+					return resField;
+				}, {
+					value: '',
+					suspicious: false
+				});
+				return field;
 			}, {});
 			userCallback(null, result);
 		})

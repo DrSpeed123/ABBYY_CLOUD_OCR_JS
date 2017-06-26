@@ -11,11 +11,11 @@ if (((typeof process) == 'undefined') || ((typeof window) != 'undefined')) {
 // http://ocrsdk.com/documentation/faq/#faq3
 
 // Name of application you created
-const appId = 'RecognitionTestApp';
+const appId = 'TestTestTestTest222';
 // Password should be sent to your e-mail after application was created
-const password = 'bXU8W/3G0eyivuLfxAuq0aLb';
+const password = 'cO5uwvgQPvaxiGrovu7yJ1lt';
 
-const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\IMG_20170604_150708888.jpg';
+const imagePath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\9508034383445028.jpg';
 const xmlPath = 'c:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\taskTemplate.xml';
 const outputPath = 'C:\\work\\abbyy\\ABBYY_CLOUD_OCR_JS\\result_js.json';
 
