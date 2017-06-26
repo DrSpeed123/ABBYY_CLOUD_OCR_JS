@@ -225,7 +225,6 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 			const result = Object.keys(resultProcessed).reduce(function(field, fieldName){
 				field[fieldName] = Object.keys(resultProcessed[fieldName]).reduce(function(resField, leftTop) {
 					let resVal = '', max = 0;
-					console.log(resultProcessed[fieldName][leftTop]);
 					Object.keys(resultProcessed[fieldName][leftTop]).forEach(function(curKey) {
 						if (curKey !== 'total' && resultProcessed[fieldName][leftTop][curKey] > max) {
 							max = resultProcessed[fieldName][leftTop][curKey];
@@ -234,7 +233,7 @@ ocrsdk.prototype.downloadResult = function(resultUrl, outputFilePath,
 					});
 					if (resultProcessed[fieldName][leftTop].total >= 3) {
 						resField.value += resVal;
-						if (resultProcessed[fieldName][leftTop].total < 5) {
+						if (resultProcessed[fieldName][leftTop].total < 4) {
 							resField.suspicious = true;
 						}
 					}
